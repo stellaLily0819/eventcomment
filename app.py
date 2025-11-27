@@ -3,6 +3,9 @@ import sqlite3
 from datetime import datetime, timedelta
 import re
 
+REQUIRED_PREFIX = "https://gf2-h5.haoplay.com/der-strandurlaub/kr/share?invite_token="
+
+
 # =========================
 # 기본 설정
 # =========================
@@ -193,7 +196,11 @@ with st.form("comment_form", clear_on_submit=True):
     username = st.text_input("닉네임", placeholder="닉네임을 입력하세요 (비워두면 '익명')")
     content = st.text_area(
         "댓글 내용",
-        placeholder="댓글을 입력하세요. 링크는 https://example.com 같은 형식으로 적으면 클릭 가능해요.",
+        placeholder=(
+            "댓글을 입력하세요.\n"
+            "반드시 아래 형식의 링크 중 하나 이상을 포함해야 합니다.\n"
+            "예) https://gf2-h5.haoplay.com/der-strandurlaub/kr/share?invite_token=XXXX"
+        ),
     )
     submitted = st.form_submit_button("등록")
 
@@ -201,34 +208,34 @@ with st.form("comment_form", clear_on_submit=True):
         if not content.strip():
             st.warning("댓글 내용을 입력해주세요!")
         else:
-            # 🔹 새 댓글에서 URL 추출
+            # 1️⃣ 새 댓글에서 URL 추출
             new_urls = extract_urls(content)
 
-            if new_urls:
-                # 🔹 DB 안의 기존 URL들 가져오기
-                existing_urls = get_all_urls(conn)
+            # 2️⃣ 그 중에서 우리가 원하는 초대 링크만 필터링
+            gf_links = [u for u in new_urls if u.startswith(REQUIRED_PREFIX)]
 
-                # 🔹 겹치는 URL 찾기
-                duplicated = [u for u in new_urls if u in existing_urls]
+            # 3️⃣ 필수 링크(해당 prefix)가 하나도 없으면 에러
+            if not gf_links:
+                st.error(
+                    "잘못된 초대 링크 입니다"
+                )
+            else:
+                # 🔹 이미 사용된 초대 링크(동일 URL) 재사용 금지하고 싶다면:
+                #    DB에서 모든 URL을 가져와서, 이번에 입력한 gf_links와 비교
+                existing_urls = get_all_urls(conn)
+                duplicated = [u for u in gf_links if u in existing_urls]
 
                 if duplicated:
-                    # 이미 등록된 링크가 하나라도 있으면 댓글 등록 막기
                     st.error(
-                        "이미 다른 댓글에서 사용된 링크는 다시 올릴 수 없습니다.\n\n"
+                        "이미 다른 댓글에서 사용된 초대 링크는 다시 사용할 수 없습니다.\n\n"
                         + "\n".join(f"- {u}" for u in duplicated)
                     )
                 else:
-                    # 중복 링크가 없을 때만 저장
+                    # 4️⃣ 여기까지 통과하면 댓글 등록
                     if not username.strip():
                         username = "익명"
                     add_comment(conn, username.strip(), content.strip())
                     st.success("댓글이 등록되었습니다!")
-            else:
-                # 링크가 없는 댓글은 그냥 허용 (필요하면 여기서도 막을 수 있음)
-                if not username.strip():
-                    username = "익명"
-                add_comment(conn, username.strip(), content.strip())
-                st.success("댓글이 등록되었습니다!")
 
 st.markdown("---")
 
