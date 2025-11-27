@@ -11,6 +11,7 @@ RESET_SECONDS = 300  # 5분 = 300초
 
 st.set_page_config(page_title="소녀전선2 망명 이벤트 공유", page_icon="💬")
 st.title("센타우레이시 스킨 이벤트 (DB 버전)")
+st.write(f"아카라이브 소녀전선2:망명채널 / 문제발생시 Caleo01 호출")
 
 # =========================
 # DB 관련 함수
