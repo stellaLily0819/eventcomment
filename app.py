@@ -9,8 +9,8 @@ import re
 DB_PATH = "comments.db"
 RESET_SECONDS = 300  # 5분 = 300초
 
-st.set_page_config(page_title="DB 기반 5분 댓글판", page_icon="💬")
-st.title("💬 5분마다 초기화되는 전역 댓글판 (DB 버전)")
+st.set_page_config(page_title="소녀전선2 망명 이벤트 공유", page_icon="💬")
+st.title("5분 갱신 댓글 공 (DB 버전)")
 
 # =========================
 # DB 관련 함수
@@ -185,7 +185,7 @@ with st.form("comment_form", clear_on_submit=True):
                 username = "익명"
 
             add_comment(conn, username.strip(), content.strip())
-            st.success("댓글이 등록되었습니다!")
+            st.success("댓글이 등록되었습니다")
 
 st.markdown("---")
 
@@ -197,7 +197,7 @@ st.subheader("댓글 목록 (모든 사용자 공용)")
 rows = get_comments(conn)
 
 if not rows:
-    st.write("아직 댓글이 없습니다. 첫 댓글을 남겨보세요! 😄")
+    st.write("아직 댓글이 없습니다. 첫 댓글을 남겨보세요")
 else:
     for row in rows:
         username = row["username"]
