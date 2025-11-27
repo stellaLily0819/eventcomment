@@ -116,6 +116,18 @@ def get_comments(conn):
     )
     return cur.fetchall()
 
+def get_all_urls(conn):
+    """DB에 있는 모든 댓글에서 URL들을 추출해 set으로 반환"""
+    cur = conn.cursor()
+    cur.execute("SELECT content FROM comments;")
+    rows = cur.fetchall()
+
+    all_urls = set()
+    for row in rows:
+        content = row["content"]
+        urls = extract_urls(content)
+        all_urls.update(urls)
+    return all_urls
 
 # =========================
 # 유틸 함수 (링크 처리 등)
@@ -142,6 +154,13 @@ def format_time_str(iso_str: str) -> str:
     dt = datetime.fromisoformat(iso_str)
     return dt.strftime("%H:%M:%S")
 
+def extract_urls(text: str):
+    """
+    텍스트에서 http:// 또는 https:// 로 시작하는 URL들을 모두 추출해서
+    중복 제거 후 리스트로 반환
+    """
+    url_pattern = re.compile(r'(https?://[^\s]+)')
+    return list(set(url_pattern.findall(text)))
 
 # =========================
 # 메인 로직
@@ -182,11 +201,34 @@ with st.form("comment_form", clear_on_submit=True):
         if not content.strip():
             st.warning("댓글 내용을 입력해주세요!")
         else:
-            if not username.strip():
-                username = "익명"
+            # 🔹 새 댓글에서 URL 추출
+            new_urls = extract_urls(content)
 
-            add_comment(conn, username.strip(), content.strip())
-            st.success("댓글이 등록되었습니다")
+            if new_urls:
+                # 🔹 DB 안의 기존 URL들 가져오기
+                existing_urls = get_all_urls(conn)
+
+                # 🔹 겹치는 URL 찾기
+                duplicated = [u for u in new_urls if u in existing_urls]
+
+                if duplicated:
+                    # 이미 등록된 링크가 하나라도 있으면 댓글 등록 막기
+                    st.error(
+                        "이미 다른 댓글에서 사용된 링크는 다시 올릴 수 없습니다.\n\n"
+                        + "\n".join(f"- {u}" for u in duplicated)
+                    )
+                else:
+                    # 중복 링크가 없을 때만 저장
+                    if not username.strip():
+                        username = "익명"
+                    add_comment(conn, username.strip(), content.strip())
+                    st.success("댓글이 등록되었습니다!")
+            else:
+                # 링크가 없는 댓글은 그냥 허용 (필요하면 여기서도 막을 수 있음)
+                if not username.strip():
+                    username = "익명"
+                add_comment(conn, username.strip(), content.strip())
+                st.success("댓글이 등록되었습니다!")
 
 st.markdown("---")
 
