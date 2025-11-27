@@ -198,8 +198,6 @@ with st.form("comment_form", clear_on_submit=True):
         "댓글 내용",
         placeholder=(
             "댓글을 입력하세요.\n"
-            "반드시 아래 형식의 링크 중 하나 이상을 포함해야 합니다.\n"
-            "예) https://gf2-h5.haoplay.com/der-strandurlaub/kr/share?invite_token=XXXX"
         ),
     )
     submitted = st.form_submit_button("등록")
