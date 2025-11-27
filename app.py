@@ -10,7 +10,7 @@ DB_PATH = "comments.db"
 RESET_SECONDS = 300  # 5분 = 300초
 
 st.set_page_config(page_title="소녀전선2 망명 이벤트 공유", page_icon="💬")
-st.title("5분 갱신 댓글 공 (DB 버전)")
+st.title("센타우레이시 스킨 이벤트 (DB 버전)")
 
 # =========================
 # DB 관련 함수
